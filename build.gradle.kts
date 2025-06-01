@@ -25,13 +25,27 @@ repositories {
   maven("https://jitpack.io")  // MixinExtras, Fabric ASM, BlueMap API
   maven("https://maven.jamieswhiteshirt.com/libs-release")  // Reach Entity Attributes
   maven("https://mvn.devos.one/snapshots/")  // Create Fabric
+  maven("https://mvn.devos.one/releases/")
   maven("https://api.modrinth.com/maven")  // LazyDFU
   maven("https://maven.tterrag.com/")  // Flywheel
   maven("https://www.cursemaven.com")  // Forge Config API Port
+  maven("https://repo1.maven.org/maven2/")  // Maven Central
 }
 
 val shadowDep: Configuration by configurations.creating
 configurations.implementation.get().extendsFrom(shadowDep)
+
+// Force dependency substitution for ForgeConfigAPIPort
+configurations.all {
+  resolutionStrategy {
+    eachDependency {
+      if (requested.group == "fuzs.forgeconfigapiport" && requested.name == "forgeconfigapiport-fabric" && requested.version == "8.0.0") {
+        useVersion("8.0.2")
+        because("Version 8.0.0 doesn't exist, using 8.0.2 instead")
+      }
+    }
+  }
+}
 
 val fabric_loader_version: String by project
 val fabric_api_version: String by project
@@ -50,7 +64,11 @@ dependencies {
   modImplementation("net.fabricmc.fabric-api:fabric-api:$fabric_api_version")
   modImplementation("net.fabricmc:fabric-language-kotlin:$fabric_kotlin_version")
 
-  modImplementation("com.simibubi.create:create-fabric-${minecraft_version}:$create_version+mc$minecraft_version")
+  modImplementation("maven.modrinth:forge-config-api-port:v8.0.2-1.20.1-Fabric")
+
+  modImplementation("com.simibubi.create:create-fabric-${minecraft_version}:$create_version+mc$minecraft_version") {
+    exclude(group = "fuzs.forgeconfigapiport", module = "forgeconfigapiport-fabric")
+  }
   modImplementation("io.github.fabricators_of_create.Porting-Lib:Porting-Lib:$porting_lib_version")
 
   shadowDep("io.ktor:ktor-server-core-jvm:$ktor_version")
